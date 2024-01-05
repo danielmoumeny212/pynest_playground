@@ -15,6 +15,9 @@ class RoutesResolver:
     for module in self.container.modules.values(): 
       for controller in module.controllers.values(): 
         self.register_route(controller)
+    
+    self.logger.info("Routes loaded successfully")
+    
 
   def register_route(self, controller): 
     router: APIRouter = controller.get_router()

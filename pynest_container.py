@@ -96,7 +96,7 @@ class PyNestContainer:
         self.add_import(module_token)
         self.add_controllers(self._get_controllers(module_token), module_token)
         self.add_providers(self._get_providers(module_token), module_token)      
-        self.logger.info(f"{click.style( module_factory.type.__name__ + ' Loaded', fg='green')}" ,)        
+        self.logger.info(f"{click.style( module_factory.type.__name__ + ' Detected ', fg='green')}" ,)        
         return module_ref
    
    def add_metadata(self, token: str, module_metadata):
