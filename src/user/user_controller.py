@@ -1,15 +1,19 @@
-from controller import Controller, Get 
-from decorators import Inject
-from fastapi import Depends
-from src.user.user_service import UserService
+from controller import Controller, Get, Post, Depends
 
-@Controller("users")
+from .user_service import UserService
+from .user_model import User
+
+
+@Controller("user")
 class UserController:
-     
-     def __init__(self, user_service: UserService):
-              pass
-     
-     @Get('/me')
-     def me(self):
-         return self.user_service.get_user()  
-     
+
+    service: UserService = Depends(UserService)
+    
+    @Get()
+    def get_user(self):
+        return self.service.get_user()
+        
+    @Post()
+    def add_user(self, user: User):
+        return self.service.add_user(user)
+
