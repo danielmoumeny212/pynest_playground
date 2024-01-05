@@ -1,6 +1,6 @@
 from fastapi.routing import APIRouter
 from helpers import class_based_view as ClassBasedView
-from fastapi import Depends
+from fastapi import Depends, status 
 
 
 def Controller(tag: str = None, prefix: str = None):
@@ -99,8 +99,7 @@ def Post(path: str = "/", **kwargs):
     def decorator(func):
         func.method = "POST"
         func.__path__ = path
-        func.status_code  = 201
-        func.__kwargs__ = kwargs
+        func.__kwargs__ = {"status_code": status.HTTP_201_CREATED, **kwargs}
         return func
 
     return decorator
@@ -122,7 +121,7 @@ def Delete(path: str = "/", **kwargs):
     def decorator(func):
         func.method = "DELETE"
         func.__path__ = path
-        func.__kwargs__ = kwargs
+        func.__kwargs__ = {"status_code": status.HTTP_201_CREATED, **kwargs}
         return func
 
     return decorator
