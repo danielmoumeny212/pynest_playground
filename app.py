@@ -21,10 +21,5 @@ app = PyNestFactory.create(
     debug=True)
 http_server = app.get_server()
 
-userModule = app.select(UserModule)
-print(userModule.__dict__.values())
-@http_server.get("/hello")
-def hello():
-     return "Hello, world!"
  
 

@@ -1,18 +1,18 @@
-from fastapi import Depends 
-from .product_service import ProductService 
-from controller import Controller , Get
+from controller import Controller, Get, Post, Depends
+from .product_service import ProductService
+from .product_model import Product
 
-@Controller("products")
-class ProductsController:
+
+@Controller("product")
+class ProductController:
+
+    service: ProductService = Depends(ProductService)
     
-    def __init__(self,product_service: ProductService = Depends(ProductService)):
-          self.product_service = product_service
-    
-    @Get("/get_products")
-    def get_products(self):
-        return self.product_service.get_product()
-     
-    @Get("/users")
-    def get_user(self): 
-        return self.user_service.get_user()
- 
+    @Get("/")
+    def get_product(self):
+        return self.service.get_product()
+        
+    @Post("/")
+    def add_product(self, product: Product):
+        return self.service.add_product(product)
+
