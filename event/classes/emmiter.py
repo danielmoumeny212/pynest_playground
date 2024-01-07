@@ -1,4 +1,4 @@
-"""Event emitter mixin class."""
+# """Event emitter mixin class."""
 
 import asyncio
 import collections
@@ -6,6 +6,7 @@ import contextlib
 import functools
 import itertools
 import warnings
+from decorators import Injectable
 
 
 async def _try_catch_coro(emitter, event, listener, coro):
@@ -35,8 +36,17 @@ async def _try_catch_coro(emitter, event, listener, coro):
 
         emitter.emit(emitter.LISTENER_ERROR_EVENT, event, listener, exc)
 
-
+@Injectable
 class EventEmitter:
+    _instance = None  
+    
+    
+    def __new__(cls, loop=None):
+      if cls._instance is None:
+        cls._instance = super(EventEmitter, cls).__new__(cls)
+        cls._instance._loop = loop or asyncio.get_event_loop()
+      return cls._instance
+
 
     """A mixin that provides methods for publishing and listening to events.
 
@@ -63,27 +73,47 @@ class EventEmitter:
     def _check_limit(self, event):
         """Check if the listener limit is hit and warn if needed."""
         if self.count(event) > self.max_listeners:
-
             warnings.warn(
-                'Too many listeners for event {}'.format(event),
+                f'Too many listeners for event {event}',
                 ResourceWarning,
             )
 
-    def add_listener(self, event, listener):
-        """Bind a listener to a particular event.
-
-        Args:
-            event (str): The name of the event to listen for. This may be any
-                string value.
-            listener (def or async def): The callback to execute when the event
-                fires. This may be a sync or async function.
-        """
+    def add_listener(self, event: str, listener) -> 'EventEmitter':
+        """Bind a listener to a particular event."""
         self.emit('new_listener', event, listener)
         self._listeners[event].append(listener)
         self._check_limit(event)
         return self
 
-    on = add_listener
+    def on(self, event: str, listener) -> 'EventEmitter':
+        """Alias for add_listener."""
+        return self.add_listener(event, listener)
+
+    def once(self, event: str, listener) -> 'EventEmitter':
+        """Add a listener that is only called once."""
+        self.emit('new_listener', event, listener)
+        self._once[event].append(listener)
+        self._check_limit(event)
+        return self
+
+
+    def emit(self, event: str, *args, **kwargs) -> 'EventEmitter':
+        """Call each listener for the event with the given arguments."""
+        listeners = itertools.chain(self._listeners[event], self._once[event])
+        self._once[event] = []
+
+        for listener in listeners:
+            self._loop.call_soon(
+                functools.partial(
+                    self._dispatch,
+                    event,
+                    listener,
+                    *args,
+                    **kwargs,
+                )
+            )
+
+        return self
 
     def once(self, event, listener):
         """Add a listener that is only called once."""
@@ -286,3 +316,110 @@ class EventEmitter:
         'on'/'add_listener' and 'once'.
         """
         return len(self._listeners[event]) + len(self._once[event])
+
+# import collections
+# import functools
+# import itertools
+# import warnings
+# from decorators import Injectable
+
+# def _try_catch(listener, event, *args, **kwargs):
+#     try:
+#         listener(*args, **kwargs)
+#     except Exception as exc:
+#         if event == listener.LISTENER_ERROR_EVENT:
+#             raise
+#         listener.emit(listener.LISTENER_ERROR_EVENT, event, listener, exc)
+
+# @Injectable
+# class EventEmitter:
+#     _instance = None
+    
+#     def __new__(cls):
+#         if cls._instance is None:
+#             cls._instance = super(EventEmitter, cls).__new__(cls)
+#             cls._instance._listeners = collections.defaultdict(list)
+#             cls._instance._once = collections.defaultdict(list)
+#             cls._instance._max_listeners = cls._instance.DEFAULT_MAX_LISTENERS
+#         return cls._instance
+
+#     DEFAULT_MAX_LISTENERS = 10
+#     LISTENER_ERROR_EVENT = 'listener-error'
+
+#     def _check_limit(self, event):
+#         if self.count(event) > self._max_listeners:
+#             warnings.warn(
+#                 f'Too many listeners for event {event}',
+#                 ResourceWarning,
+#             )
+
+#     def add_listener(self, event, listener):
+#         self.emit('new_listener', event, listener)
+#         self._listeners[event].append(listener)
+#         self._check_limit(event)
+#         return self
+
+#     on = add_listener
+
+#     def once(self, event, listener):
+#         self.emit('new_listener', event, listener)
+#         self._once[event].append(listener)
+#         self._check_limit(event)
+#         return self
+
+#     def remove_listener(self, event, listener):
+#         with contextlib.suppress(ValueError):
+#             self._listeners[event].remove(listener)
+#             return True
+
+#         with contextlib.suppress(ValueError):
+#             self._once[event].remove(listener)
+#             return True
+
+#         return False
+
+#     def remove_all_listeners(self, event=None):
+#         if event is None:
+#             self._listeners = collections.defaultdict(list)
+#             self._once = collections.defaultdict(list)
+#         else:
+#             del self._listeners[event]
+#             del self._once[event]
+
+#     @property
+#     def max_listeners(self):
+#         return self._max_listeners
+
+#     @max_listeners.setter
+#     def max_listeners(self, value):
+#         self._max_listeners = value
+
+#     def listeners(self, event):
+#         return self._listeners[event][:] + self._once[event][:]
+
+#     def _dispatch(self, event, listener, *args, **kwargs):
+#         try:
+#             listener(*args, **kwargs)
+#         except Exception as exc:
+#             if event == self.LISTENER_ERROR_EVENT:
+#                 raise
+#             self.emit(self.LISTENER_ERROR_EVENT, event, listener, exc)
+
+#     def emit(self, event, *args, **kwargs):
+#         listeners = self._listeners[event]
+#         listeners = itertools.chain(listeners, self._once[event])
+#         self._once[event] = []
+#         for listener in listeners:
+#             functools.partial(
+#                 self._dispatch,
+#                 event,
+#                 listener,
+#                 *args,
+#                 **kwargs,
+#             )
+#             print(listener, event)
+
+#         return self
+
+#     def count(self, event):
+#         return len(self._listeners[event]) + len(self._once[event])

@@ -5,6 +5,7 @@ import string
 from typing import List
 from uuid import uuid4
 from typing import Any, Type, Union
+from constants import MODULE_METADATA_PARAMS
 
 
 class ModulesContainer(dict):
@@ -108,12 +109,14 @@ class Module:
     def add_imports(self, module_ref: List[Any]):
           for module in module_ref:
               self.add_import(module)
-        
+    
         
     def add_provider(self, provider) -> str: 
          self._providers[provider.__name__] = provider;
          return provider.__name__;
-    
+    def add_export(self, export) -> str: 
+         self._exports.add(export);
+         return export.__name__;
     def add_controller(self, controller) -> str: 
          self._controllers[controller.__name__] = controller
          return controller.__name__
@@ -269,7 +272,7 @@ class ModuleCompiler:
        
        if not self.has_module_metadata(metatype): 
             raise Exception(f"{metatype.__name__} as no metadata found")
-       for props in  ["imports", 'providers', "controllers"]: 
+       for props in  MODULE_METADATA_PARAMS: 
           metadata["dynamic_metadata"][props]  = getattr(metatype, props, [])
        return metadata
     

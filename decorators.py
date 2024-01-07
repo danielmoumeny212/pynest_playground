@@ -2,22 +2,24 @@ from ioc import get_di_container
 from typing import Type, Union, TypeVar, List
 from constants import ModuleMetadata, INJECTABLE_TOKEN 
 class Module:
-    def __init__(self, imports = None , controllers=None, providers=None):
+    def __init__(self, imports = None , controllers=None, providers=None, exports=None):
         self.controllers = controllers or []
         self.providers = providers or []
         self.imports = imports or []
+        self.exports = exports
 
     def __call__(self, cls):
         setattr(cls,ModuleMetadata.CONTROLLERS.value, self.controllers)
         setattr(cls,ModuleMetadata.PROVIDER.value, self.providers)
         setattr(cls, ModuleMetadata.IMPORT.value, self.imports)
+        setattr(cls, ModuleMetadata.EXPORTS.value, self.exports)
         return cls
       
 
 def Injectable(cls):
     setattr(cls, INJECTABLE_TOKEN, True)
     return cls
- 
+
   
 class Inject:
     def __init__(self, service_class: Type):

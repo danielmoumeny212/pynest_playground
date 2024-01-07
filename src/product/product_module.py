@@ -7,7 +7,8 @@ from decorators import Module
 @Module(
     controllers=[ProductController],
     providers=[ProductService],
-    imports=[]
+    imports=[], 
+    exports=[]
 )
 class ProductModule:
     pass
