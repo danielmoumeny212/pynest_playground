@@ -1,5 +1,6 @@
 from fastapi.routing import APIRouter
 from helpers import class_based_view as ClassBasedView
+from constants import STATUS_CODE_TOKEN
 from fastapi import Depends, status 
 
 
@@ -43,6 +44,8 @@ def Controller(tag: str = None, prefix: str = None):
                     method.__path__ = prefix + method.__path__
                 if not method.__path__.startswith("/"):
                     method.__path__ = "/" + method.__path__
+                if hasattr(method, STATUS_CODE_TOKEN) and method.__kwargs__.get(STATUS_CODE_TOKEN) is None: 
+                    method.__kwargs__[STATUS_CODE_TOKEN] = method.__dict__[STATUS_CODE_TOKEN]
                 router.add_api_route(
                     method.__path__, method, methods=[http_method], **method.__kwargs__
                 )
@@ -61,11 +64,12 @@ def Controller(tag: str = None, prefix: str = None):
     return wrapper
 
 
-def Get(path: str = "/", **kwargs):
+def route(method: str, path: str = "/", **kwargs):
     """
-    Decorator that defines a GET route for the controller.
+    Decorator that defines a route for the controller.
 
     Args:
+        method (str): The HTTP method for the route (GET, POST, DELETE, PUT, PATCH).
         path (str): The URL path for the route.
         **kwargs: Additional keyword arguments to configure the route.
 
@@ -73,99 +77,16 @@ def Get(path: str = "/", **kwargs):
         function: The decorated function.
 
     """
-
     def decorator(func):
-        func.method = "GET"
+        func.method = method
         func.__path__ = path
         func.__kwargs__ = kwargs
         return func
-
     return decorator
 
+Get = lambda path="/", **kwargs: route("GET", path, **kwargs)
+Post = lambda path="/", **kwargs: route("POST", path, **kwargs)
+Delete = lambda path="/", **kwargs: route("DELETE", path, **kwargs)
+Put = lambda path="/", **kwargs: route("PUT", path, **kwargs)
+Patch = lambda path="/", **kwargs: route("PATCH", path, **kwargs)
 
-def Post(path: str = "/", **kwargs):
-    """
-    Decorator that defines a POST route for the controller.
-
-    Args:
-        path (str): The URL path for the route.
-        **kwargs: Additional keyword arguments to configure the route.
-
-    Returns:
-        function: The decorated function.
-
-    """
-
-    def decorator(func):
-        func.method = "POST"
-        func.__path__ = path
-        func.__kwargs__ = {"status_code": status.HTTP_201_CREATED, **kwargs}
-        return func
-
-    return decorator
-
-
-def Delete(path: str = "/", **kwargs):
-    """
-    Decorator that defines a DELETE route for the controller.
-
-    Args:
-        path (str): The URL path for the route.
-        **kwargs: Additional keyword arguments to configure the route.
-
-    Returns:
-        function: The decorated function.
-
-    """
-
-    def decorator(func):
-        func.method = "DELETE"
-        func.__path__ = path
-        func.__kwargs__ = {"status_code": status.HTTP_201_CREATED, **kwargs}
-        return func
-
-    return decorator
-
-
-def Put(path: str = "/", **kwargs):
-    """
-    Decorator that defines a PUT route for the controller.
-
-    Args:
-        path (str): The URL path for the route.
-        **kwargs: Additional keyword arguments to configure the route.
-
-    Returns:
-        function: The decorated function.
-
-    """
-
-    def decorator(func):
-        func.method = "PUT"
-        func.__path__ = path
-        func.__kwargs__ = kwargs
-        return func
-
-    return decorator
-
-
-def Patch(path: str = "/", **kwargs):
-    """
-    Decorator that defines a PATCH route for the controller.
-
-    Args:
-        path (str): The URL path for the route.
-        **kwargs: Additional keyword arguments to configure the route.
-
-    Returns:
-        function: The decorated function.
-
-    """
-
-    def decorator(func):
-        func.method = "PATCH"
-        func.__path__ = path
-        func.__kwargs__ = kwargs
-        return func
-
-    return decorator

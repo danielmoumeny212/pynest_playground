@@ -9,7 +9,6 @@ from logger import Logger
 import click
 from event.decorateur import EVENT_LISTENER_METADATA
 from src.product.product_model import Product
-from app_service import event
 from event.classes.emmiter import EventEmitter
 
 from collections import defaultdict
@@ -36,6 +35,8 @@ class DependencyGraph:
 
             self.recursion_stack.remove(module)
         return False
+   
+   
 class PyNestContainer: 
    _instance = None 
    

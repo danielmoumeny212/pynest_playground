@@ -21,8 +21,6 @@ app = PyNestFactory.create(
     title="My App", 
     version="1.0.0",
     debug=True)
-eventEmitter = EventEmitter()
-eventEmitter.emit("user.added", "event")
 http_server = app.get_server()
 userModule = app.select(UserModule)
  

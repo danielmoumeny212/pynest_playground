@@ -5,7 +5,6 @@ from typing import Any, Dict, List, Union
 from collections import defaultdict
 from pynest_container import PyNestContainer
 from router_resolver import RoutesResolver
-from event.classes.emmiter import EventEmitter 
 import asyncio 
 
 
@@ -36,10 +35,8 @@ class PyNestApp(PyNestApplicationContext):
         self.routes_resolver = RoutesResolver(self._container, self._http_adaptater)
         self.select_context_module()
         self._register_routes()
-        events = self._container.detect_event(self._container.get_all_services())
-        self.emitter = EventEmitter()
-        self._container.subscribe_events(events, self.emitter)
-        self.emitter.emit("user.added")
+        # events = self._container.detect_event(self._container.get_all_services())
+        # self._container.subscribe_events(events, self.emitter)
         
     
         
