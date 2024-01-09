@@ -6,7 +6,7 @@ from collections import defaultdict
 from pynest_container import PyNestContainer
 from router_resolver import RoutesResolver
 import asyncio 
-
+from event.classes.emmiter import EventEmitter 
 
 
 class AbstractPyNestApp(ABC):
@@ -35,8 +35,11 @@ class PyNestApp(PyNestApplicationContext):
         self.routes_resolver = RoutesResolver(self._container, self._http_adaptater)
         self.select_context_module()
         self._register_routes()
-        # events = self._container.detect_event(self._container.get_all_services())
-        # self._container.subscribe_events(events, self.emitter)
+        self.emitter = EventEmitter()
+        events = self._container.detect_event(self._container.get_all_services())
+        self._container.subscribe_events(events, self.emitter)
+        self.emitter.emit("user.added", "hello world", "world")
+        
         
     
         

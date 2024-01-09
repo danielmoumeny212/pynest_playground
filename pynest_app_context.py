@@ -39,7 +39,7 @@ class PyNestApplicationContext:
        self.context_module = next(iter(modules), None)
        
        
-   def select(self, module):
+   def select(self, module) :
        modules_container = self.container.modules
        module_token_factory = self.container.module_token_factory
        

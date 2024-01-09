@@ -115,17 +115,114 @@ def create_instance_from_provider(self, name):
     })
     return instance
 
-      
+class ParamMapper:
+    def __init__(self, container):
+        self.container = container
 
+    def map(self, target_class):
+        param_names = self.extra_param_names(target_class)
+        param_type_mapping = {}
+
+        for name in param_names:
+            p = ParamTypeExtractor.extract(target_class, name)
+            service = self.container.get_service(p)
+
+            if service is None:
+                raise Exception(f"{name} is not included in provider array ")
+
+            param_type_mapping[name] = service
+
+        return param_type_mapping
+
+
+class ConstructorAnalyzer:
+    def __init__(self, container, param_mapper):
+        self.container = container
+        self.param_mapper = param_mapper
+
+    def analyze(self, target_class):
+        has_constr = self.has_constructor(target_class)
+        if not has_constr:
+            return None
+        dependencies = self.param_mapper.map(target_class)
+
+        for key, value in dependencies.items():
+            setattr(target_class, key, value)
+
+        service_instance = target_class(**dependencies)
+        return service_instance
+    
+class ParamTypeExtractor:
+    @staticmethod
+    def extract(target_class, param_name):
+        annotations = inspect.getfullargspec(target_class).annotations
+        return annotations.get(param_name)
+
+
+class ConstructorChecker:
+    @staticmethod
+    def has_constructor(target):
+        arg = inspect.getfullargspec(target.__init__)
+        annotations = arg.annotations
+        return len(annotations.items()) > 0
+
+
+class ParamNameExtractor:
+    @staticmethod
+    def extract(targeted_class):
+        params = inspect.getfullargspec(targeted_class).args
+        if not params:
+            return []
+        return [name for name in params if name != "self"]
+
+class InstanceCreator:
+    def __init__(self, container):
+        self.container = container
+
+    def create_from_provider(self, name):
+        # À compléter selon vos besoins
+        pass
+
+class DependencyInjector:
+    def __init__(self, container):
+        self.param_type_extractor = ParamTypeExtractor()
+        self.param_mapper = ParamMapper(container)
+        self.constructor_analyzer = ConstructorAnalyzer(container, self.param_mapper)
+        self.constructor_checker = ConstructorChecker()
+        self.param_name_extractor = ParamNameExtractor()
+        self.instance_creator = InstanceCreator(container)
+
+    def analyse_constructor(self, target_class):
+        return self.constructor_analyzer.analyze(target_class)
+    
+
+class ModuleScanner:
+    def __init__(self, container):
+        self.container = container
+
+    def scan_module(self, module):
+        # Logique pour scanner un module
+        # - Détecter les imports
+        # - Détecter les exports
+        # - Détecter les providers
+        # - Détecter les controllers
+
+     def inject_dependencies(self, instance):
+        # Logique pour injecter les dépendances dans le constructeur d'une classe
+        pass
 # dependency_analyzer.py
 
 class DependencyAnalyzer:
     @staticmethod
-    def analyse_constructor(target_class, container):
-        pass 
+    def analyse_constructor(target_class):
+        arg = inspect.getfullargspec(target_class.__init__)
+        annotations = arg.annotations
+        return len(annotations.items()) > 0
     @staticmethod
     def has_constructor(target):
-        pass 
+        arg = inspect.getfullargspec(target.__init__)
+        annotations = arg.annotations
+        return len(annotations.items()) > 0
 
     @staticmethod
     def map_param_names_to_p(target_class, container):

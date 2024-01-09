@@ -2,6 +2,7 @@ from fastapi.routing import APIRouter
 from helpers import class_based_view as ClassBasedView
 from constants import STATUS_CODE_TOKEN
 from fastapi import Depends, status 
+from typing import Callable, Any
 
 
 def Controller(tag: str = None, prefix: str = None):
@@ -84,9 +85,18 @@ def route(method: str, path: str = "/", **kwargs):
         return func
     return decorator
 
-Get = lambda path="/", **kwargs: route("GET", path, **kwargs)
-Post = lambda path="/", **kwargs: route("POST", path, **kwargs)
-Delete = lambda path="/", **kwargs: route("DELETE", path, **kwargs)
-Put = lambda path="/", **kwargs: route("PUT", path, **kwargs)
-Patch = lambda path="/", **kwargs: route("PATCH", path, **kwargs)
 
+# Decorator for defining a GET route with an optional path
+Get: Callable[[str], Callable[..., Any]] = lambda path="/", **kwargs: route("GET", path, **kwargs)
+
+# Decorator for defining a POST route with an optional path
+Post: Callable[[str], Callable[..., Any]] = lambda path="/", **kwargs: route("POST", path, **kwargs)
+
+# Decorator for defining a DELETE route with an optional path
+Delete: Callable[[str], Callable[..., Any]] = lambda path="/", **kwargs: route("DELETE", path, **kwargs)
+
+# Decorator for defining a PUT route with an optional path
+Put: Callable[[str], Callable[..., Any]] = lambda path="/", **kwargs: route("PUT", path, **kwargs)
+
+# Decorator for defining a PATCH route with an optional path
+Patch: Callable[[str], Callable[..., Any]] = lambda path="/", **kwargs: route("PATCH", path, **kwargs)

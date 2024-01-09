@@ -180,6 +180,7 @@ class PyNestContainer:
               event_metadata, func  = self.extract_event_metadata(event)
               event_type = event_metadata.event
               event_options = event_metadata.options
+              
               emitter.on(event_type, func)
    
    def add_exports(self, providers, exports, module_token):
@@ -197,13 +198,14 @@ class PyNestContainer:
         if not module_ref: 
              raise UnknownModuleException()
         if not hasattr(export, INJECTABLE_TOKEN):
-          error_message = f"""
+             error_message = f"""
                {click.style(export.__name__, fg='red')} is not injectable. 
                To make {export.__name__} injectable, apply the {click.style("@Injectable decorator", fg='green')} to the class definition. 
                or remove {click.style(export.__name__, fg='red')} from the provider array of the Module class. 
                Please check your code and ensure that the decorator is correctly applied to the class.
-          """
-          raise NoneInjectableException(error_message)
+               """
+             raise NoneInjectableException(error_message)
+
 
         module_ref.add_export(export)
    def add_metadata(self, token: str, module_metadata):
@@ -256,7 +258,7 @@ class PyNestContainer:
                To make {provider.__name__} injectable, apply the {click.style("@Injectable decorator", fg='green')} to the class definition. 
                or remove {click.style(provider.__name__, fg='red')} from the provider array of the Module class. 
                Please check your code and ensure that the decorator is correctly applied to the class.
-          """
+               """
           raise NoneInjectableException(error_message)
 
         module_ref.add_provider(provider)
