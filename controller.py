@@ -2,54 +2,56 @@ from fastapi.routing import APIRouter
 from helpers import class_based_view as ClassBasedView
 from constants import STATUS_CODE_TOKEN
 from fastapi import Depends, status 
-from typing import Callable, Any
+from typing import Callable, Any, Union, List
+from typing import Optional, Union, List
+from fastapi import APIRouter
 
-
-def Controller(tag: str = None, prefix: str = None):
+def Controller(tag: str = None, prefix: Optional[Union[str, List[str]]] = None):
     """
     Decorator that turns a class into a controller, allowing you to define routes using FastAPI decorators.
 
     Args:
         tag (str, optional): The tag to use for OpenAPI documentation.
-        prefix (str, optional): The prefix to use for all routes.
+        prefix (Optional[Union[str, List[str]]]): The prefix or list of prefixes to use for all routes.
 
     Returns:
         class: The decorated class.
-
     """
     # Use tag as default prefix if prefix is None
-    if prefix is None:
-        prefix = tag
+    prefixes = [tag] if tag else []
 
-    if not prefix.startswith("/"):
-        prefix = "/" + prefix
-    if prefix.endswith("/"):
-        prefix = prefix[:-1]
+    if prefix:
+        prefixes.extend(prefix) if isinstance(prefix, list) else [prefix]
 
     def wrapper(cls) -> ClassBasedView:
-        router = APIRouter(tags=[tag] if tag else None)
+        router = APIRouter(tags=prefixes)
 
         http_method_names = ("GET", "POST", "PUT", "DELETE", "PATCH")
+
+        generated_routes = set()
 
         for name, method in cls.__dict__.items():
             if callable(method) and hasattr(method, "method"):
                 # Check if method is decorated with an HTTP method decorator
-                assert (
-                    hasattr(method, "__path__") and method.__path__
-                ), f"Missing path for method {name}"
+                assert hasattr(method, "__path__") and method.__path__, f"Missing path for method {name}"
 
                 http_method = method.method
                 # Ensure that the method is a valid HTTP method
                 assert http_method in http_method_names, f"Invalid method {http_method}"
-                if prefix:
-                    method.__path__ = prefix + method.__path__
-                if not method.__path__.startswith("/"):
-                    method.__path__ = "/" + method.__path__
-                if hasattr(method, STATUS_CODE_TOKEN) and method.__kwargs__.get(STATUS_CODE_TOKEN) is None: 
-                    method.__kwargs__[STATUS_CODE_TOKEN] = method.__dict__[STATUS_CODE_TOKEN]
-                router.add_api_route(
-                    method.__path__, method, methods=[http_method], **method.__kwargs__
-                )
+
+                # Process single path or list of paths
+                paths = method.__path__ if isinstance(method.__path__, list) else [method.__path__]
+
+                for path in paths:
+                    if prefixes and isinstance(path, str):
+                        for prefix in prefixes:
+                            combined_path = f"/{prefix.rstrip('/')}/{path.lstrip('/')}"
+                            print(combined_path)
+
+                            # Check if the route has already been generated to avoid duplicates
+                            if combined_path not in generated_routes:
+                                router.add_api_route(combined_path, method,methods=[http_method], **method.__kwargs__)
+                                generated_routes.add(combined_path)
 
         def get_router() -> APIRouter:
             """
@@ -65,38 +67,53 @@ def Controller(tag: str = None, prefix: str = None):
     return wrapper
 
 
-def route(method: str, path: str = "/", **kwargs):
+
+
+
+from typing import Union, List
+
+def route(method: str, path: Union[str, List[str]] = "/", **kwargs):
     """
     Decorator that defines a route for the controller.
 
     Args:
         method (str): The HTTP method for the route (GET, POST, DELETE, PUT, PATCH).
-        path (str): The URL path for the route.
+        path (Union[str, List[str]]): The URL path for the route.
         **kwargs: Additional keyword arguments to configure the route.
 
     Returns:
         function: The decorated function.
-
     """
+
     def decorator(func):
         func.method = method
         func.__path__ = path
         func.__kwargs__ = kwargs
+
         return func
+
     return decorator
 
 
+
+
+
+# Example usage:
+# get_route = Get("/users")
+# get_route_decorated = get_route(my_function)
+
+
 # Decorator for defining a GET route with an optional path
-Get: Callable[[str], Callable[..., Any]] = lambda path="/", **kwargs: route("GET", path, **kwargs)
+Get: Callable[[Union[str, List[str]]], Callable[..., Any]] = lambda path="/", **kwargs: route("GET", path, **kwargs)
 
 # Decorator for defining a POST route with an optional path
-Post: Callable[[str], Callable[..., Any]] = lambda path="/", **kwargs: route("POST", path, **kwargs)
+Post: Callable[[Union[str, List[str]]], Callable[..., Any]] = lambda path="/", **kwargs: route("POST", path, **kwargs)
 
 # Decorator for defining a DELETE route with an optional path
-Delete: Callable[[str], Callable[..., Any]] = lambda path="/", **kwargs: route("DELETE", path, **kwargs)
+Delete: Callable[[Union[str, List[str]]], Callable[..., Any]] = lambda path="/", **kwargs: route("DELETE", path, **kwargs)
 
 # Decorator for defining a PUT route with an optional path
-Put: Callable[[str], Callable[..., Any]] = lambda path="/", **kwargs: route("PUT", path, **kwargs)
+Put: Callable[[Union[str, List[str]]], Callable[..., Any]] = lambda path="/", **kwargs: route("PUT", path, **kwargs)
 
 # Decorator for defining a PATCH route with an optional path
-Patch: Callable[[str], Callable[..., Any]] = lambda path="/", **kwargs: route("PATCH", path, **kwargs)
+Patch: Callable[[Union[str, List[str]]], Callable[..., Any]] = lambda path="/", **kwargs: route("PATCH", path, **kwargs)
