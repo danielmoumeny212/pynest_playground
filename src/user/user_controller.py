@@ -6,7 +6,7 @@ from .user_service import UserService
 from .user_model import User
 from event.classes.emmiter import EventEmitter 
 
-@Controller(prefix=["users", 'customer'])
+@Controller("users")
 class UserController:
 
     service: UserService = Depends(UserService)
@@ -23,4 +23,6 @@ class UserController:
     @Post()
     def add_user(self, user: User):
         return self.service.add_user(user)
+    
+    
 

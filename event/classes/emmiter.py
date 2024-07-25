@@ -1,6 +1,8 @@
 # """Event emitter mixin class."""
 from functools import lru_cache
+from decorators import Injectable
 
+@Injectable
 class EventEmitter:
     _instance = None  
     

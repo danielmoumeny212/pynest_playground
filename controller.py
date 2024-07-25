@@ -18,13 +18,14 @@ def Controller(tag: str = None, prefix: Optional[Union[str, List[str]]] = None):
         class: The decorated class.
     """
     # Use tag as default prefix if prefix is None
-    prefixes = [tag] if tag else []
+    prefixes = [tag] if tag and prefix is None  else []
 
     if prefix:
         prefixes.extend(prefix) if isinstance(prefix, list) else [prefix]
 
     def wrapper(cls) -> ClassBasedView:
         router = APIRouter(tags=prefixes)
+        setattr(cls, "prefixes", prefixes)
 
         http_method_names = ("GET", "POST", "PUT", "DELETE", "PATCH")
 
@@ -46,12 +47,14 @@ def Controller(tag: str = None, prefix: Optional[Union[str, List[str]]] = None):
                     if prefixes and isinstance(path, str):
                         for prefix in prefixes:
                             combined_path = f"/{prefix.rstrip('/')}/{path.lstrip('/')}"
-                            print(combined_path)
 
                             # Check if the route has already been generated to avoid duplicates
                             if combined_path not in generated_routes:
-                                router.add_api_route(combined_path, method,methods=[http_method], **method.__kwargs__)
-                                generated_routes.add(combined_path)
+                                if  hasattr(method, STATUS_CODE_TOKEN) and method.__kwargs__.get(STATUS_CODE_TOKEN) is None:
+                                    method.__kwargs__[STATUS_CODE_TOKEN] = method.__dict__[STATUS_CODE_TOKEN]
+                            router.add_api_route(combined_path, method,methods=[http_method], **method.__kwargs__)
+                            generated_routes.add(combined_path)
+                            print(generated_routes)
 
         def get_router() -> APIRouter:
             """
@@ -117,3 +120,63 @@ Put: Callable[[Union[str, List[str]]], Callable[..., Any]] = lambda path="/", **
 
 # Decorator for defining a PATCH route with an optional path
 Patch: Callable[[Union[str, List[str]]], Callable[..., Any]] = lambda path="/", **kwargs: route("PATCH", path, **kwargs)
+
+# def Controller(tag: str = None, prefix: str = None):
+#     """
+#     Decorator that turns a class into a controller, allowing you to define routes using FastAPI decorators.
+
+#     Args:
+#         tag (str, optional): The tag to use for OpenAPI documentation.
+#         prefix (str, optional): The prefix to use for all routes.
+
+#     Returns:
+#         class: The decorated class.
+
+#     """
+#     # Use tag as default prefix if prefix is None
+#     if prefix is None:
+#         prefix = tag
+
+#     # Ensure prefix has correct formatting
+#     if prefix:
+#         prefix = "/" + prefix.rstrip("/") if not prefix.startswith("/") else prefix.rstrip("/")
+
+#     def wrapper(cls) -> ClassBasedView:
+#         router = APIRouter(tags=[tag] if tag else None)
+
+#         http_method_names = ("GET", "POST", "PUT", "DELETE", "PATCH")
+
+#         for name, method in cls.__dict__.items():
+#             if callable(method) and hasattr(method, "method"):
+                
+#                 # Check if method is decorated with an HTTP method decorator
+#                 assert hasattr(method, "__path__") and method.__path__, f"Missing path for method {name}"
+
+#                 http_method = method.method
+#                 # Ensure that the method is a valid HTTP method
+#                 assert http_method in http_method_names, f"Invalid method {http_method}"
+
+#                 # Process single path or list of paths
+#                 paths = method.__path__ if isinstance(method.__path__, list) else [method.__path__]
+#                 for path in paths:
+#                     if prefix and isinstance(path, str):
+#                         method.__path__ = f"{prefix.rstrip('/')}/{path.lstrip('/')}" if path else prefix.rstrip('/')
+                    
+#                     # Set default status code if  provided in @HttpCode decorator
+#                     if  hasattr(method, STATUS_CODE_TOKEN) and method.__kwargs__.get(STATUS_CODE_TOKEN) is None:
+#                         method.__kwargs__[STATUS_CODE_TOKEN] = method.__dict__[STATUS_CODE_TOKEN]
+#                     router.add_api_route(method.__path__, method, methods=[http_method], **method.__kwargs__)
+
+                    
+#         def get_router() -> APIRouter:
+#             """
+#             Returns:
+#                 APIRouter: The router associated with the controller.
+#             """
+#             return router
+
+#         cls.get_router = get_router
+
+#         return ClassBasedView(router=router, cls=cls)
+
+#     return wrapper

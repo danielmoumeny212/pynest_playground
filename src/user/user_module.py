@@ -10,4 +10,6 @@ from decorators import Module
     exports=[],
 )
 class UserModule:
-    pass
+    
+    def __init__(self, hello: str) -> None:
+        pass

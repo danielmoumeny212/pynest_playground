@@ -1,4 +1,7 @@
-from fastapi import FastAPI , HTTPException
+from fastapi import FastAPI , Request
+from exception import HttpException
+from fastapi.responses import JSONResponse
+
 from abc import abstractmethod, ABC
 from pynest_app_context import PyNestApplicationContext
 from typing import Any, Dict, List, Union
@@ -35,6 +38,7 @@ class PyNestApp(PyNestApplicationContext):
         self.routes_resolver = RoutesResolver(self._container, self._http_adaptater)
         self.select_context_module()
         self._register_routes()
+        self._setup_except_handler()
         self.emitter = EventEmitter()
         events = self._container.detect_event(self._container.get_all_services())
         self._container.subscribe_events(events, self.emitter)
@@ -108,4 +112,16 @@ class PyNestApp(PyNestApplicationContext):
     def global_prefix(self, prefix: str): 
          self._http_adaptater.prefix = prefix 
         
-        
+    def  _setup_except_handler(self): 
+        @self._http_adaptater.exception_handler(HttpException)
+        async def  global_exception_handler(request: Request, exc: HttpException):
+            if isinstance(exc, HttpException): 
+                message = exc.create_body(exc.message)
+            return JSONResponse(
+        status_code=exc.status,
+        content=HttpException.create_body(
+            message=exc.message,
+            error=exc.options,
+            status_code=exc.status
+        )
+    )

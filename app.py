@@ -6,9 +6,11 @@ from src.management.management_module import ManagementModule
 from app_controller import AppController
 from event.event_module import EventEmitterModule
 from event.classes.emmiter import EventEmitter
+from ioc import analyse_constructor
+from fastapi.responses import JSONResponse
 import asyncio 
 @Module(
-    imports=[UserModule, ManagementModule, ProductModule],
+    imports=[UserModule, ManagementModule, ProductModule, EventEmitterModule],
     controllers=[AppController]
 )
 class AppModule(): 

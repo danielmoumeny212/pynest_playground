@@ -115,6 +115,9 @@ class PyNestContainer:
            module_metadata = self.get_module_metadata(token)
            providers = self.extract_module_param_metadata(module_metadata,PROVIDER_TOKEN)
            return providers
+      
+
+  
     
    def add_providers(self, providers: List[Any], module_token: str):
            for provider in providers:

@@ -1,6 +1,7 @@
 from pynest_container import PyNestContainer
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.routing import APIRouter
+from fastapi.logger import logger
 from logger import Logger
 
 class RoutesResolver: 
@@ -16,12 +17,15 @@ class RoutesResolver:
       for controller in module.controllers.values(): 
         self.register_route(controller)
     
-    self.logger.info("Routes loaded successfully")
     
 
   def register_route(self, controller): 
     router: APIRouter = controller.get_router()
+    prefixes = "/".join(controller.prefixes) if controller.prefixes else ""
+    route_info = f"Registered route for {controller.__name__} (Prefixes: {prefixes})"
+    self.logger.info(route_info)
     self.http_adaptater.include_router(router)
+
   
      
   def route_not_found_exception_handler(self, request, exc):
